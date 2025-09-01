@@ -91,7 +91,7 @@ export default function HomePage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {paged.map((r, idx) => (
+                        {paged.map((r) => (
                             <tr key={r.id} className={`odd:bg-white even:bg-slate-50 hover:bg-indigo-50`}>
                                 <td className="px-3 py-2 border-b border-slate-200">{r.id}</td>
                                 <td className="px-3 py-2 border-b border-slate-200">{r.name}</td>

@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as Auth from '@/api/auth';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import * as Auth from "@/api/auth";
+
+// auth.ts 의 me() 반환 타입 정의
+export type MeResponse = { username: string; roles: string[] } | null;
 
 type AuthState = {
-    user: Auth.Me | null;
+    user: MeResponse;
     loading: boolean;
     login: (u: string, p: string) => Promise<void>;
     logout: () => Promise<void>;
@@ -12,7 +15,7 @@ type AuthState = {
 const Ctx = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<Auth.Me | null>(null);
+    const [user, setUser] = useState<MeResponse>(null);
     const [loading, setLoading] = useState(true);
 
     const refresh = async () => {
@@ -25,7 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    useEffect(() => { void refresh(); }, []);
+    useEffect(() => {
+        void refresh();
+    }, []);
 
     const login = async (username: string, password: string) => {
         await Auth.login(username, password);
@@ -46,6 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
     const ctx = useContext(Ctx);
-    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+    if (!ctx) throw new Error("useAuth must be used within AuthProvider");
     return ctx;
 }
