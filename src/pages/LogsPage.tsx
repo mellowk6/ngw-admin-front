@@ -1,54 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchGuids, fetchLoggers, fetchLogs, type LogRow } from "@/api/logs";
+import { fetchLogs, type LogRow } from "@/api/logs";
 
 const PAGE_SIZES = [10, 30, 50, 100];
 
 export default function LogsPage() {
-    // 상단 검색 컨트롤 상태
+    // 검색 컨트롤
     const [guid, setGuid] = useState("");
     const [logger, setLogger] = useState<string>(""); // 공란=전체
-    const [guidOptions, setGuidOptions] = useState<string[]>([]);
-    const [loggerOptions, setLoggerOptions] = useState<string[]>([]);
+    // 프리패치 제거: 빈 옵션만 유지 (경고 방지를 위해 렌더에서 사용)
+    const [guidOptions] = useState<string[]>([]);
+    const [loggerOptions] = useState<string[]>(["ROOT", "MONITOR"]);
 
     // 페이지 상태
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
 
-    // 조회 결과
+    // 결과
     const [rows, setRows] = useState<LogRow[]>([]);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // 초기 진입 시: logger 종류 & 최근 GUID 로드
-    useEffect(() => {
-        (async () => {
-            try {
-                const [ls, gs] = await Promise.all([fetchLoggers(), fetchGuids(10)]);
-                setLoggerOptions(ls ?? []);
-                setGuidOptions(gs ?? []);
-                if (!guid && gs?.length) setGuid(gs[0]); // 최근 GUID 자동 선택(있으면)
-            } catch (e) {
-                console.error(e);
-            }
-        })();
-    }, []); // 최초 1회
-
-    // 조회 함수
-    async function load(p = page, s = pageSize) {
+    // NGW 호출
+    async function load(p = page, s = pageSize, g = guid, l = logger) {
         setLoading(true);
         try {
             const res = await fetchLogs({
                 page: p,
                 size: s,
-                guid: guid?.trim() || undefined,
-                logger: logger || undefined,
-            }); // res: Page<LogRow>
-
+                guid: g?.trim() || undefined,
+                logger: l || undefined,
+            });
             setRows(res.content ?? []);
             setTotalPages(res.totalPages ?? 0);
             setTotalElements(res.totalElements ?? 0);
-            // (원하면 현재 페이지도 서버 응답의 number를 신뢰하도록)
+            // 서버 페이지 번호를 신뢰하고 싶으면:
             // setPage(res.number ?? p);
         } catch (e) {
             console.error(e);
@@ -60,30 +46,25 @@ export default function LogsPage() {
         }
     }
 
-    // 검색 버튼
-    const onSearch = () => {
-        setPage(0);
+    // 페이지 진입 시 1회 호출
+    useEffect(() => {
         load(0, pageSize);
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    // 초기화
+    // 핸들러들
+    const onSearch = () => { setPage(0); load(0, pageSize); };
     const onReset = () => {
-        setGuid("");
-        setLogger("");
-        setPage(0);
-        setPageSize(10);
-        setRows([]);
-        setTotalPages(0);
-        setTotalElements(0);
+        setGuid(""); setLogger("");
+        setPage(0); setPageSize(10);
+        setRows([]); setTotalPages(0); setTotalElements(0);
     };
 
-    // 페이지 변경 핸들러
     const goFirst = () => { setPage(0); load(0, pageSize); };
     const goPrev  = () => { const p = Math.max(0, page - 1); setPage(p); load(p, pageSize); };
     const goNext  = () => { const p = Math.min(Math.max(0, totalPages - 1), page + 1); setPage(p); load(p, pageSize); };
     const goLast  = () => { const p = Math.max(0, totalPages - 1); setPage(p); load(p, pageSize); };
 
-    // 안전 페이지 표시
     const pageLabel = useMemo(() => (totalPages ? page + 1 : 0), [page, totalPages]);
 
     return (
