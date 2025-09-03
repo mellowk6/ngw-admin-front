@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import StatusBadge from "@/components/StatusBadge";
+import StatusBadge from "@shared/ui/StatusBadge.tsx";
 
 type Row = { id: number; name: string; status: "ACTIVE" | "INACTIVE" | "PENDING"; createdAt: string };
 

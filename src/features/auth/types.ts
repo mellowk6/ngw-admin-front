@@ -1,0 +1,1 @@
+export type Me = { username: string } | null;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchLogs, type LogRow } from "@/api/logs";
+import { fetchLogs } from "@/features/logs/logs";
+import type { LogRow } from "@/features/logs/logs";
 
 const PAGE_SIZES = [10, 30, 50, 100];
 

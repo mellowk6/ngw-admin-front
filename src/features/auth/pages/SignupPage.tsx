@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signup } from "@/api/auth";
+import { signup } from "@features/auth/auth.ts";
 
 type Dept = { code: string; name: string };
 

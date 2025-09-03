@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import * as Auth from "@/api/auth";
+import * as Auth from "@/features/auth/auth.ts";
 
 // auth.ts 의 me() 반환 타입 정의
 export type MeResponse = { username: string; roles: string[] } | null;
