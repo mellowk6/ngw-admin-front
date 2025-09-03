@@ -1,35 +1,10 @@
-export interface LogRow {
-    time: string;
-    ngwId: string;
-    loggerName: string;
-    logLevel: string;
-    thread: string;
-    nodeId: string;
-    className: string;
-    guid: string;
-    message: string;
-}
-
-export interface Page<T> {
-    content: T[];
-    totalElements: number;
-    totalPages: number;
-    number: number;
-    size: number;
-}
-
-export interface FetchLogsParams {
-    guid?: string;
-    logger?: string;
-    page?: number;
-    size?: number;
-}
+import {apiFetch} from "@core/http/client";
+import {FetchLogsParams, LogRow, Page} from "@features/logs/types";
 
 export async function fetchLogs(params: FetchLogsParams): Promise<Page<LogRow>> {
-    const res = await fetch("/api/logs", {
+    const res = await apiFetch("/api/logs", {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             guid: params.guid ?? null,
             logger: params.logger ?? null,

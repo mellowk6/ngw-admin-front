@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { logout, me } from "@/features/auth/auth.ts";
-import Sidebar from "@/app/layout/Sidebar.tsx";
+import {logout, me} from "@features/auth/auth";
+import Sidebar from "@app/layout/Sidebar";
 
 export default function AppShell() {
     const [open, setOpen] = useState(true);
