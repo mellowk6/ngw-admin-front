@@ -1,4 +1,4 @@
-// 쿠키 포함 및 CSRF 자동 적용용 래퍼
+// src/core/http/client.ts
 let csrfHeader = 'X-XSRF-TOKEN';
 let csrfToken: string | null = null;
 
@@ -11,21 +11,61 @@ async function ensureCsrf() {
     return csrfToken!;
 }
 
-export async function apiFetch(input: RequestInfo, init: RequestInit = {}) {
-    // 모든 요청에 쿠키 포함
+/** ✅ 제네릭 반환: ApiResponse<T>면 data만 언래핑해서 T로 돌려줌 */
+export async function apiFetch<T = unknown>(
+    input: RequestInfo | URL,
+    init: RequestInit = {}
+): Promise<T> {
     const baseInit: RequestInit = { credentials: 'include', ...init };
 
-    // 변경 요청(POST/PUT/PATCH/DELETE)에만 CSRF 헤더 자동 추가
-    const method = (baseInit.method ?? 'GET').toUpperCase();
-    if (['POST','PUT','PATCH','DELETE'].includes(method)) {
+    const headers = new Headers(baseInit.headers || {});
+    if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+
+    const method = (baseInit.method ?? 'GET').toString().toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
         const token = await ensureCsrf();
-        baseInit.headers = {
-            ...(baseInit.headers || {}),
-            [csrfHeader]: token,
-        };
+        headers.set(csrfHeader, token);
     }
-    return fetch(input, baseInit);
+    baseInit.headers = headers;
+
+    const res = await fetch(input, baseInit);
+
+    if (res.status === 204) return undefined as unknown as T;
+
+    const raw = await res.text();
+    if (!raw) {
+        if (!res.ok) throw buildHttpError(res.status);
+        return undefined as unknown as T;
+    }
+
+    let json: any;
+    try {
+        json = JSON.parse(raw);
+    } catch {
+        if (!res.ok) throw buildHttpError(res.status, raw);
+        return raw as unknown as T;
+    }
+
+    if (!res.ok) {
+        const message = json?.message || json?.error || `HTTP ${res.status}`;
+        const err = buildHttpError(res.status, message);
+        (err as any).body = json;
+        throw err;
+    }
+
+    // ApiResponse<T> 자동 언래핑
+    if (json && typeof json === 'object' && 'data' in json) {
+        return json.data as T;
+    }
+    return json as T;
 }
 
-// 필요 시 강제 리프레시(로그아웃 뒤 등)
-export function resetCsrf() { csrfToken = null; }
+function buildHttpError(status: number, message?: string) {
+    const err = new Error(message ?? `HTTP ${status}`);
+    (err as any).status = status;
+    return err;
+}
+
+export function resetCsrf() {
+    csrfToken = null;
+}

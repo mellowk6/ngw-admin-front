@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {logout, me} from "@features/auth/auth";
-import Sidebar from "@app/layout/Sidebar";
+import { logout, me } from "@/features/auth/auth";
+import Sidebar from "@/app/layout/Sidebar";
 
 export default function AppShell() {
     const [open, setOpen] = useState(true);
@@ -64,10 +64,10 @@ export default function AppShell() {
 
             {/* Topbar */}
             <header className="border-b border-slate-200 flex items-center justify-between px-4 bg-slate-800 text-white">
-                <div className="text-sm font-semibold">Admin Console</div>
+                <div className="text-sm font-semibold">NGW Admin Console</div>
                 <div className="flex items-center gap-3">
                     {username && <span className="text-xs opacity-90">👋 {username}</span>}
-                    <span className="text-xs opacity-80">v0.1.0</span>
+                    <span className="text-xs opacity-80">관리자</span>
                     <button
                         type="button"
                         disabled={loggingOut}
