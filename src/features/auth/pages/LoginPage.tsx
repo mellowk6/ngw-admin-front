@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { login } from "@features/auth/auth.ts";
+import { login } from "@features/auth/auth";
 
 export default function LoginPage() {
     const nav = useNavigate();

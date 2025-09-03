@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { me } from "@/features/auth/auth.ts";   // ✅ /api/me 호출
+import { me } from "@/features/auth/auth";   // ✅ /api/me 호출
 
 export default function RequireAuth() {
     const loc = useLocation();
