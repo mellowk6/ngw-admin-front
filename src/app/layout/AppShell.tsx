@@ -42,13 +42,26 @@ export default function AppShell() {
             {/* Sidebar */}
             <aside className="row-span-2 bg-slate-900 text-slate-100 transition-all duration-200">
                 <div className="p-2">
+                    {/* ▼ 여기만 변경 */}
                     <button
-                        className="w-full h-9 mb-2 text-xs rounded border border-slate-300 hover:bg-slate-100"
                         onClick={() => setOpen(o => !o)}
                         title={open ? "사이드바 접기" : "사이드바 펼치기"}
+                        aria-label={open ? "사이드바 접기" : "사이드바 펼치기"}
+                        aria-pressed={open}
+                        className="
+                            group inline-flex w-full h-9 items-center justify-center gap-1.5
+                            rounded-lg px-2.5 text-xs font-medium
+                            text-slate-300 hover:text-white
+                            hover:bg-white/5                   /* 은은한 틴트 */
+                            ring-1 ring-transparent hover:ring-white/15
+                            transition-all duration-150
+                            active:scale-[.98]
+                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50
+                        "
                     >
                         {open ? "◀  메뉴 접기" : "▶"}
                     </button>
+                    {/* ▲ 여기만 변경 */}
 
                     {/* 열림 상태일 때 전체 메뉴 보여주기 */}
                     {open ? (
@@ -80,7 +93,7 @@ export default function AppShell() {
                                 nav("/login", { replace: true });
                             }
                         }}
-                        className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded disabled:opacity-50"
+                        className="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded disabled:opacity-50 transition-colors"
                     >
                         {loggingOut ? "로그아웃 중..." : "로그아웃"}
                     </button>
