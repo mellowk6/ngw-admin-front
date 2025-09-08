@@ -1,4 +1,3 @@
-// router.tsx
 import {createBrowserRouter, redirect, Outlet} from "react-router-dom";
 import {JSX, lazy, Suspense} from "react";
 import {ROUTES} from "@/app/constants/routes";
@@ -50,25 +49,26 @@ export const router = createBrowserRouter(
         },
 
         // 게스트 라우트
-        {path: ROUTES.login, loader: requireGuest, element: S(<LoginPage/>), errorElement: <ErrorPage/>},
-        {path: ROUTES.signup, loader: requireGuest, element: S(<SignupPage/>), errorElement: <ErrorPage/>},
+        { path: ROUTES.login,  loader: requireGuest, element: S(<LoginPage/>),  errorElement: <ErrorPage/> },
+        { path: ROUTES.signup, loader: requireGuest, element: S(<SignupPage/>), errorElement: <ErrorPage/> },
 
         // 보호 라우트: 부모(/app) 로더에서 인증 선검증
         {
             path: ROUTES.app,
             element: <AppShell/>,
-            loader: requireAuthed,           // ← RequireAuth 컴포넌트 대신 로더로 가드
+            loader: requireAuthed,           // ← 부모에서 인증 선검증
+            shouldRevalidate: () => true,    // ★ 자식 전환 포함 항상 재검증
             errorElement: <ErrorPage/>,
             children: [
-                {index: true, loader: () => redirect("logs"), element: <div/>}, // /app → /app/logs
-                {path: "logs", element: S(<LogsPage/>)},
-                {path: "sample", element: S(<HomePage/>)},
-                {path: "*", element: <ErrorPage status={404}/>},
+                { index: true, loader: () => redirect("logs"), element: <div/> }, // /app → /app/logs
+                { path: "logs",   loader: requireAuthed, element: S(<LogsPage/>) },   // ★ 자식에서도 재검증
+                { path: "sample", loader: requireAuthed, element: S(<HomePage/>) },   // ★ 자식에서도 재검증
+                { path: "*", element: <ErrorPage status={404}/> },
             ],
         },
 
         // 앱 전체 최종 404
-        {path: "*", element: <ErrorPage status={404}/>},
+        { path: "*", element: <ErrorPage status={404}/> },
     ],
     {
         // 서브경로 배포 시 유용 (Vite의 BASE_URL과 연동)

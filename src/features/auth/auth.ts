@@ -1,4 +1,5 @@
 import { apiFetch, resetCsrf } from "@core/http/client";
+import { STORAGE_KEYS } from "@/app/constants/storageKeys";  // ★ 추가
 
 // 회원가입 요청 필드
 export interface SignupRequest {
@@ -27,20 +28,25 @@ export async function login(username: string, password: string): Promise<true> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
     });
+    // ★ 로그인 성공 표시 (세션 만료 401 시 팝업 여부 판단 용도)
+    localStorage.setItem(STORAGE_KEYS.authFlag, "1");
     return true;
 }
 
 export async function logout(): Promise<void> {
     await apiFetch<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+    // ★ 플래그/토큰 정리
+    localStorage.removeItem(STORAGE_KEYS.authFlag);
     // 다음 요청에서 CSRF 재발급되도록 초기화
     resetCsrf();
 }
 
 export async function me(): Promise<Me | null> {
     try {
+        // 비로그인 상태를 허용하지 않는 앱이지만, 호출부 호환을 위해 타입은 유지
         return await apiFetch<Me>("/api/me");
     } catch (e: any) {
-        if (e?.status === 401) return null; // 비로그인: 정상 흐름
+        if (e?.status === 401) return null; // apiFetch에서 리다이렉트 처리됨
         throw e;                             // 그 외 오류는 그대로 전파
     }
 }
