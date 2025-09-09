@@ -1,11 +1,16 @@
 export const API = {
     auth: {
-        csrf: "/api/auth/csrf",
-        login: "/api/auth/login",
-        logout: "/api/auth/logout",
-        me: "/api/me",
-        checkId: "/api/auth/check-id",
-        signup: "/api/auth/signup",
+        csrf: "/api/auth/csrf"
+    },
+    user: {
+        login: "/api/user/login",
+        logout: "/api/user/logout",
+        myInfo: "/api/user/my-info",
+        checkId: "/api/user/check-id",
+        signup: "/api/user/signup",
+        dept: {
+            list: "/api/user/dept/list"
+        },
     },
     logs: {
         list: "/api/logs",

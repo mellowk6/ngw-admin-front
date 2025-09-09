@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signup } from "@features/auth/auth";
+import { API } from "@/app/constants/apiPaths";
 
 type Dept = { code: string; name: string };
 
@@ -45,7 +46,7 @@ export default function SignupPage() {
     useEffect(() => {
         (async () => {
             try {
-                const list = await getJson<Dept[]>("/api/dept/list");
+                const list = await getJson<Dept[]>(API.user.dept.list);
                 setDepts(list || []);
             } catch {
                 setDepts([]);
@@ -61,7 +62,7 @@ export default function SignupPage() {
             setError(null);
             setCheckingId(true);
             const j = await getJson<{ available: boolean }>(
-                `/api/auth/check-id?userId=${encodeURIComponent(userId.trim())}`
+                `${API.user.checkId}?userId=${encodeURIComponent(userId.trim())}`
             );
             setIdAvailable(!!j?.available);
             if (!j?.available) setError("이미 사용 중인 아이디입니다.");

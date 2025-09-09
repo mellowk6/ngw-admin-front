@@ -1,5 +1,6 @@
 import { apiFetch, resetCsrf } from "@core/http/client";
-import { STORAGE_KEYS } from "@/app/constants/storageKeys";  // ★ 추가
+import { STORAGE_KEYS } from "@/app/constants/storageKeys";
+import {API} from "@app/constants/apiPaths";  // ★ 추가
 
 // 회원가입 요청 필드
 export interface SignupRequest {
@@ -23,7 +24,7 @@ export async function prefetchCsrf(): Promise<void> {
 }
 
 export async function login(username: string, password: string): Promise<true> {
-    await apiFetch<{ ok: boolean }>("/api/auth/login", {
+    await apiFetch<{ ok: boolean }>(API.user.login, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -34,7 +35,7 @@ export async function login(username: string, password: string): Promise<true> {
 }
 
 export async function logout(): Promise<void> {
-    await apiFetch<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
+    await apiFetch<{ ok: boolean }>(API.user.logout, { method: "POST" });
     // ★ 플래그/토큰 정리
     localStorage.removeItem(STORAGE_KEYS.authFlag);
     // 다음 요청에서 CSRF 재발급되도록 초기화
@@ -44,7 +45,7 @@ export async function logout(): Promise<void> {
 export async function me(): Promise<Me | null> {
     try {
         // 비로그인 상태를 허용하지 않는 앱이지만, 호출부 호환을 위해 타입은 유지
-        return await apiFetch<Me>("/api/me");
+        return await apiFetch<Me>(API.user.myInfo);
     } catch (e: any) {
         if (e?.status === 401) return null; // apiFetch에서 리다이렉트 처리됨
         throw e;                             // 그 외 오류는 그대로 전파
@@ -52,7 +53,7 @@ export async function me(): Promise<Me | null> {
 }
 
 export async function signup(data: SignupRequest): Promise<true> {
-    await apiFetch("/api/auth/signup", {
+    await apiFetch(API.user.signup, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
