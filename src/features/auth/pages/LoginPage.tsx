@@ -6,8 +6,8 @@ export default function LoginPage() {
     const nav = useNavigate();
     const loc = useLocation() as any;
 
-    const [username, setU] = useState("");
-    const [password, setP] = useState("");
+    const [id, setId] = useState("");
+    const [password, setPw] = useState("");
     const [showPw, setShowPw] = useState(false);
     const [capsOn, setCapsOn] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function LoginPage() {
         try {
             await fetch("/api/auth/csrf", {
                 credentials: "include",
-                cache: "no-store", // 캐시 우회(개발 환경에서 종종 도움)
+                cache: "no-store",
             });
         } catch {
             // 프리페치 실패는 조용히 무시 (제출 시 한 번 더 시도)
@@ -30,7 +30,6 @@ export default function LoginPage() {
         }
     }
 
-    // 최초 진입 시 한 번 프리페치
     useEffect(() => {
         let mounted = true;
         (async () => {
@@ -47,11 +46,12 @@ export default function LoginPage() {
         setErr(null);
         setLoading(true);
         try {
-            // 아직 토큰 준비가 안 됐다면 한 번 더 보장 호출
             if (!csrfReady) await prefetchCsrf();
 
-            await login(username.trim(), password);
-            await fetch("/api/auth/csrf", { credentials: "include" });// 로그인 직후 최신 CSRF 쿠키 재발급
+            await login(id.trim(), password);
+            // 로그인 직후 최신 CSRF 쿠키 재발급
+            await fetch("/api/auth/csrf", { credentials: "include" });
+
             const to = loc?.state?.from?.pathname ?? "/app";
             nav(to, { replace: true });
         } catch (e: any) {
@@ -75,9 +75,10 @@ export default function LoginPage() {
                     <label className="text-sm">아이디</label>
                     <input
                         className="w-full rounded-lg border px-3 py-2 text-sm"
-                        value={username}
-                        onChange={(e) => setU(e.target.value)}
-                        placeholder="username"
+                        value={id}
+                        onChange={(e) => setId(e.target.value)}
+                        placeholder="id"
+                        name="id"
                         autoComplete="username"
                     />
                 </div>
@@ -89,14 +90,23 @@ export default function LoginPage() {
                             type={showPw ? "text" : "password"}
                             className="w-full rounded-lg border px-3 py-2 text-sm pr-20"
                             value={password}
-                            onChange={(e) => setP(e.target.value)}
+                            onChange={(e) => setPw(e.target.value)}
                             placeholder="••••••••"
+                            name="password"
                             autoComplete="current-password"
                             onKeyDown={(e) =>
-                                setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))
+                                setCapsOn(
+                                    (e as React.KeyboardEvent<HTMLInputElement>).getModifierState?.(
+                                        "CapsLock"
+                                    ) ?? false
+                                )
                             }
                             onKeyUp={(e) =>
-                                setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))
+                                setCapsOn(
+                                    (e as React.KeyboardEvent<HTMLInputElement>).getModifierState?.(
+                                        "CapsLock"
+                                    ) ?? false
+                                )
                             }
                         />
                         <button
@@ -119,7 +129,7 @@ export default function LoginPage() {
                 <div className="flex gap-2">
                     <button
                         type="submit"
-                        disabled={loading || !username || !password || !csrfReady}
+                        disabled={loading || !id || !password || !csrfReady}
                         className="flex-1 rounded-lg bg-blue-600 text-white py-2 text-sm disabled:opacity-50"
                     >
                         {loading ? "로그인 중..." : "로그인"}
@@ -133,10 +143,7 @@ export default function LoginPage() {
                     </button>
                 </div>
 
-                {/* 토큰 준비 안내(선택) */}
-                {!csrfReady && (
-                    <p className="text-xs text-slate-500 mt-2">보안 토큰 준비 중…</p>
-                )}
+                {!csrfReady && <p className="text-xs text-slate-500 mt-2">보안 토큰 준비 중…</p>}
             </form>
         </div>
     );

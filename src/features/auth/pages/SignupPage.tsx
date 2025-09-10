@@ -15,10 +15,10 @@ async function getJson<T>(url: string): Promise<T> {
 export default function SignupPage() {
     const nav = useNavigate();
 
-    // 폼 상태
-    const [userId, setUserId] = useState("");
+    // 폼 상태 (신 스키마)
+    const [id, setId] = useState("");
     const [password, setPassword] = useState("");
-    const [displayName, setDisplayName] = useState("");
+    const [name, setName] = useState("");
     const [company, setCompany] = useState("");
     const [deptCode, setDeptCode] = useState("");
 
@@ -33,13 +33,8 @@ export default function SignupPage() {
     const [error, setError] = useState<string | null>(null);
 
     const allFilled = useMemo(
-        () =>
-            userId.trim() &&
-            password.trim() &&
-            displayName.trim() &&
-            company.trim() &&
-            deptCode.trim(),
-        [userId, password, displayName, company, deptCode]
+        () => id.trim() && password.trim() && name.trim() && company.trim() && deptCode.trim(),
+        [id, password, name, company, deptCode]
     );
 
     // 부서 목록 불러오기
@@ -62,7 +57,7 @@ export default function SignupPage() {
             setError(null);
             setCheckingId(true);
             const j = await getJson<{ available: boolean }>(
-                `${API.user.checkId}?userId=${encodeURIComponent(userId.trim())}`
+                `${API.user.checkId}?id=${encodeURIComponent(id.trim())}`
             );
             setIdAvailable(!!j?.available);
             if (!j?.available) setError("이미 사용 중인 아이디입니다.");
@@ -77,7 +72,7 @@ export default function SignupPage() {
     // 값이 바뀌면 다시 중복확인 필요
     useEffect(() => {
         setIdAvailable(null);
-    }, [userId]);
+    }, [id]);
 
     // 제출
     async function handleSubmit(e: React.FormEvent) {
@@ -96,10 +91,10 @@ export default function SignupPage() {
         try {
             setSubmitting(true);
             await signup({
-                username: userId.trim(),      // 사번 입력
+                id: id.trim(),
                 password: password.trim(),
-                displayName: displayName.trim(),
-                department: deptCode.trim(),
+                name: name.trim(),
+                deptCode: deptCode.trim(),
                 company: company.trim(),
             });
             alert("가입이 완료되었습니다. 로그인 화면으로 이동합니다.");
@@ -119,21 +114,22 @@ export default function SignupPage() {
             >
                 <h1 className="text-2xl font-bold">회원가입</h1>
 
-                {/* 사용자 ID (사번) + 중복확인 */}
+                {/* 사용자 ID + 중복확인 */}
                 <div>
-                    <label className="block text-sm font-medium mb-1">사용자ID (사번) *</label>
+                    <label className="block text-sm font-medium mb-1">아이디 *</label>
                     <div className="flex gap-2">
                         <input
-                            value={userId}
-                            onChange={(e) => setUserId(e.target.value)}
-                            placeholder="사번을 입력하세요"
+                            value={id}
+                            onChange={(e) => setId(e.target.value)}
+                            placeholder="사번/아이디를 입력하세요"
                             className="flex-1 h-11 rounded-xl border px-3 text-sm"
                             autoComplete="off"
+                            name="id"
                         />
                         <button
                             type="button"
                             onClick={handleCheckId}
-                            disabled={!userId.trim() || checkingId}
+                            disabled={!id.trim() || checkingId}
                             className="h-11 px-4 rounded-xl border border-slate-300 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
                         >
                             {checkingId ? "확인중..." : "중복확인"}
@@ -149,13 +145,14 @@ export default function SignupPage() {
 
                 {/* 사용자명 */}
                 <div>
-                    <label className="block text-sm font-medium mb-1">사용자명 *</label>
+                    <label className="block text-sm font-medium mb-1">이름 *</label>
                     <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         placeholder="홍길동"
                         className="w-full h-11 rounded-xl border px-3 text-sm"
                         autoComplete="name"
+                        name="name"
                     />
                 </div>
 
@@ -168,6 +165,7 @@ export default function SignupPage() {
                         placeholder="회사명을 입력하세요"
                         className="w-full h-11 rounded-xl border px-3 text-sm"
                         autoComplete="organization"
+                        name="company"
                     />
                 </div>
 
@@ -179,6 +177,7 @@ export default function SignupPage() {
                         onChange={(e) => setDeptCode(e.target.value)}
                         className="w-full h-11 rounded-xl border px-3 text-sm bg-white"
                         disabled={loadingDepts}
+                        name="deptCode"
                     >
                         <option value="">{loadingDepts ? "불러오는 중..." : "부서를 선택하세요"}</option>
                         {depts.map((d) => (
@@ -199,17 +198,14 @@ export default function SignupPage() {
                         placeholder="비밀번호"
                         className="w-full h-11 rounded-xl border px-3 text-sm"
                         autoComplete="new-password"
+                        name="password"
                     />
-                    <p className="mt-1 text-xs text-slate-500">
-                        * 모든 Text 필드는 필수 입력입니다.
-                    </p>
+                    <p className="mt-1 text-xs text-slate-500">* 모든 Text 필드는 필수 입력입니다.</p>
                 </div>
 
                 {/* 오류 */}
                 {error && (
-                    <div className="rounded-lg bg-rose-50 text-rose-700 px-4 py-3 text-sm">
-                        {error}
-                    </div>
+                    <div className="rounded-lg bg-rose-50 text-rose-700 px-4 py-3 text-sm">{error}</div>
                 )}
 
                 {/* 액션 버튼 */}

@@ -1,1 +1,1 @@
-export type Me = { username: string } | null;
+export type Me = { id: string; roles: string[] } | null;
