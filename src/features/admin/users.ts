@@ -1,14 +1,16 @@
 import { apiFetch } from "@core/http/client";
+import { API } from "@/app/constants/apiPaths";
 
-/** 단일 사용자 행 타입 (그리드에 표시되는 컬럼 그대로) */
+/** 단일 사용자 행 타입 */
 export type UserRow = {
     userId: string;
     userName: string;
-    deptName: string;
+    deptCode: string;      // ← 추가: 코드
+    deptName: string;      // 표시용 이름
     companyName: string;
     role: string;
-    joinedAt: string;   // ISO or yyyy-MM-dd
-    updatedAt: string;  // ISO or yyyy-MM-dd
+    joinedAt: string;
+    updatedAt: string;
 };
 
 /** 조회 요청 파라미터 */
@@ -18,7 +20,7 @@ export type UserSearch = {
     userId?: string;
     userName?: string;
     role?: string;
-    deptName?: string;
+    deptCode?: string;     // ← 이름 대신 코드로 검색
     companyName?: string;
 };
 
@@ -27,7 +29,7 @@ export type Page<T> = {
     content: T[];
     totalPages: number;
     totalElements: number;
-    number: number;     // current page (0-base)
+    number: number;
 };
 
 /** 사용자 목록 조회 */
@@ -38,38 +40,46 @@ export async function fetchUsers(q: UserSearch): Promise<Page<UserRow>> {
     if (q.userId) p.set("userId", q.userId);
     if (q.userName) p.set("userName", q.userName);
     if (q.role) p.set("role", q.role);
-    if (q.deptName) p.set("deptName", q.deptName);
+    if (q.deptCode) p.set("deptCode", q.deptCode);     // ← deptCode로 전송
     if (q.companyName) p.set("companyName", q.companyName);
-
     return apiFetch<Page<UserRow>>(`/api/users?${p.toString()}`);
 }
 
-/** 사용자 단건 업데이트 (그리드에서 편집한 1행 적용) */
+/** 단건 업데이트 */
 export async function updateUser(row: Partial<UserRow> & { userId: string }): Promise<true> {
+    const payload = {
+        userName: row.userName,
+        deptCode: row.deptCode,              // ← 코드로 보냄
+        companyName: row.companyName,
+        role: row.role,
+        joinedAt: row.joinedAt,
+        updatedAt: row.updatedAt,
+    };
     await apiFetch(`/api/users/${encodeURIComponent(row.userId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(row),
+        body: JSON.stringify(payload),
     });
     return true;
 }
 
-/** 권한/부서 셀렉트 옵션 */
+/** 옵션 타입 */
 export type SimpleOption = { value: string; label: string };
-
-export async function fetchRoleOptions(): Promise<SimpleOption[]> {
-    // 필요 시 /api/roles 같은 엔드포인트로 교체 가능
-    return [
-        { value: "Admin", label: "Admin" },
-        { value: "User", label: "User" },
-        { value: "Auditor", label: "Auditor" },
-    ];
-}
 
 /** 부서 목록 조회 (DB 기반) */
 type Dept = { code: string; name: string };
 
 export async function fetchDeptOptions(): Promise<SimpleOption[]> {
-    const list = await apiFetch<Dept[]>("/api/dept/list");
+    // ← 회원가입과 동일한 엔드포인트 사용
+    const list = await apiFetch<Dept[]>(API.user.dept.list);
     return (list ?? []).map((d) => ({ value: d.code, label: d.name }));
+}
+
+/** 권한 옵션(임시 하드코딩) */
+export async function fetchRoleOptions(): Promise<SimpleOption[]> {
+    return [
+        { value: "Admin", label: "Admin" },
+        { value: "User", label: "User" },
+        { value: "Auditor", label: "Auditor" },
+    ];
 }
