@@ -78,8 +78,7 @@ export async function fetchDeptOptions(): Promise<SimpleOption[]> {
 /** 권한 옵션(임시 하드코딩) */
 export async function fetchRoleOptions(): Promise<SimpleOption[]> {
     return [
-        { value: "Admin", label: "Admin" },
-        { value: "User", label: "User" },
-        { value: "Auditor", label: "Auditor" },
+        { value: "ADMIN", label: "ADMIN" },
+        { value: "DEVELOPER", label: "DEVELOPER" }
     ];
 }
