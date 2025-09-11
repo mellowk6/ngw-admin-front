@@ -11,6 +11,8 @@ const SignupPage = lazy(() => import("@/features/auth/pages/SignupPage"));
 const LogsPage   = lazy(() => import("@/features/logs/pages/LogsPage"));
 const HomePage   = lazy(() => import("@/features/home/pages/HomePage"));
 const UsersPage  = lazy(() => import("@features/admin/pages/UsersPage"));
+// ★ 권한 관리
+const RolesPage  = lazy(() => import("@features/admin/pages/RolesPage"));
 
 // 공통 Suspense 래퍼
 const S = (el: JSX.Element) => <Suspense fallback={<div/>}>{el}</Suspense>;
@@ -57,8 +59,8 @@ export const router = createBrowserRouter(
         {
             path: ROUTES.app,
             element: <AppShell />,
-            loader: requireAuthed,         // 부모에서 인증 선검증
-            shouldRevalidate: () => true,  // 자식 전환 포함 항상 재검증
+            loader: requireAuthed,
+            shouldRevalidate: () => true,
             errorElement: <ErrorPage />,
             children: [
                 { index: true, loader: () => redirect("logs"), element: <div /> }, // /app → /app/logs
@@ -67,8 +69,10 @@ export const router = createBrowserRouter(
                 { path: "logs",        loader: requireAuthed, element: S(<LogsPage />) },
                 { path: "sample",      loader: requireAuthed, element: S(<HomePage />) },
 
-                // ★ 사용자 관리
+                // ADMIN
                 { path: "admin/users", loader: requireAuthed, element: S(<UsersPage />) },
+                // ★ 권한 관리 추가
+                { path: "admin/roles", loader: requireAuthed, element: S(<RolesPage />) },
 
                 { path: "*", element: <ErrorPage status={404} /> },
             ],
@@ -78,7 +82,6 @@ export const router = createBrowserRouter(
         { path: "*", element: <ErrorPage status={404} /> },
     ],
     {
-        // 서브경로 배포 시 유용 (Vite의 BASE_URL과 연동)
         basename: import.meta.env.BASE_URL,
     }
 );

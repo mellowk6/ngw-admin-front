@@ -55,7 +55,7 @@ export default function UsersPage() {
                 userId: fUserId.trim() || undefined,
                 userName: fUserName.trim() || undefined,
                 role: fRole || undefined,
-                deptName: fDept || undefined,
+                deptCode: fDept || undefined,
                 companyName: fCompany.trim() || undefined,
             });
             setRows(res.content ?? []);

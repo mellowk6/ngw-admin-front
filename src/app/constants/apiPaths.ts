@@ -1,6 +1,6 @@
 export const API = {
     auth: {
-        csrf: "/api/auth/csrf"
+        csrf: "/api/auth/csrf",
     },
     user: {
         login: "/api/user/login",
@@ -9,12 +9,20 @@ export const API = {
         checkId: "/api/user/check-id",
         signup: "/api/user/signup",
         dept: {
-            list: "/api/user/dept/list"
+            list: "/api/user/dept/list",
         },
     },
     logs: {
         list: "/api/logs",
         loggers: "/api/logs/loggers",
         guids: "/api/logs/guids",
+    },
+    admin: {
+        roles: {
+            base: "/api/roles",
+        },
+        menus: {
+            list: "/api/menus",
+        },
     },
 } as const;

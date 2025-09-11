@@ -5,7 +5,7 @@ import { API } from "@/app/constants/apiPaths";
 export type UserRow = {
     userId: string;
     userName: string;
-    deptCode: string;      // ← 추가: 코드
+    deptCode: string;      // 코드
     deptName: string;      // 표시용 이름
     companyName: string;
     role: string;
@@ -20,7 +20,7 @@ export type UserSearch = {
     userId?: string;
     userName?: string;
     role?: string;
-    deptCode?: string;     // ← 이름 대신 코드로 검색
+    deptCode?: string;      // 코드로 검색
     companyName?: string;
 };
 
@@ -40,21 +40,25 @@ export async function fetchUsers(q: UserSearch): Promise<Page<UserRow>> {
     if (q.userId) p.set("userId", q.userId);
     if (q.userName) p.set("userName", q.userName);
     if (q.role) p.set("role", q.role);
-    if (q.deptCode) p.set("deptCode", q.deptCode);     // ← deptCode로 전송
+    if (q.deptCode) p.set("deptCode", q.deptCode);       // deptCode로 전송
     if (q.companyName) p.set("companyName", q.companyName);
+
     return apiFetch<Page<UserRow>>(`/api/users?${p.toString()}`);
 }
 
 /** 단건 업데이트 */
-export async function updateUser(row: Partial<UserRow> & { userId: string }): Promise<true> {
+export async function updateUser(
+    row: Partial<UserRow> & { userId: string }
+): Promise<true> {
     const payload = {
         userName: row.userName,
-        deptCode: row.deptCode,              // ← 코드로 보냄
+        deptCode: row.deptCode,            // 코드로 보냄
         companyName: row.companyName,
         role: row.role,
         joinedAt: row.joinedAt,
         updatedAt: row.updatedAt,
     };
+
     await apiFetch(`/api/users/${encodeURIComponent(row.userId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -70,7 +74,7 @@ export type SimpleOption = { value: string; label: string };
 type Dept = { code: string; name: string };
 
 export async function fetchDeptOptions(): Promise<SimpleOption[]> {
-    // ← 회원가입과 동일한 엔드포인트 사용
+    // 회원가입과 동일한 엔드포인트 사용
     const list = await apiFetch<Dept[]>(API.user.dept.list);
     return (list ?? []).map((d) => ({ value: d.code, label: d.name }));
 }
@@ -78,7 +82,7 @@ export async function fetchDeptOptions(): Promise<SimpleOption[]> {
 /** 권한 옵션(임시 하드코딩) */
 export async function fetchRoleOptions(): Promise<SimpleOption[]> {
     return [
-        { value: "ADMIN", label: "ADMIN" },
-        { value: "DEVELOPER", label: "DEVELOPER" }
+        { value: "ADMIN",     label: "ADMIN" },
+        { value: "DEVELOPER", label: "DEVELOPER" },
     ];
 }
