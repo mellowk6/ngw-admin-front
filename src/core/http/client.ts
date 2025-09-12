@@ -30,6 +30,23 @@ export async function apiFetch<T = unknown>(
     }
     baseInit.headers = headers;
 
+    // ★ 로그 추가: 최종 요청 정보 확인
+    const urlStr =
+        typeof input === "string" ? input : (input as any)?.url ?? input.toString();
+    const headersObj = Object.fromEntries(new Headers(baseInit.headers).entries());
+    const bodyPreview =
+        typeof baseInit.body === "string"
+            ? baseInit.body
+            : baseInit.body
+                ? "[non-string body]"
+                : undefined;
+
+    console.log("[apiFetch] 요청 →", method, urlStr, {
+        headers: headersObj,
+        body: bodyPreview,
+    });
+    // ★ 로그 추가 끝
+
     const res = await fetch(input, baseInit);
 
     // === 401 공통 처리 (무한루프 방지 포함) ===
