@@ -89,23 +89,23 @@ export async function fetchRoles(q: RoleSearch): Promise<Page<RoleRow>> {
 /** ----- 업서트 공통 바디(✅ ID만 전송) ----- */
 type UpsertBody = { roleName: string; menuScope: string };
 
-/** ✅ 무조건 menuIds만 서버로 전송 (콤마 구분) */
+/** 바디부 서버로 전송 (콤마 구분) */
 function makeUpsertBody(row: { role: string; menuIds: string[] }): UpsertBody {
     const scope = (row.menuIds ?? []).join(",");
     return { roleName: row.role, menuScope: scope };
 }
 
-/** 권한 생성(✅ ID만 전송) */
+/** 권한 생성 */
 export async function createRole(row: { role: string; menuIds: string[] }): Promise<true> {
     await apiFetch(API.admin.roles.base, {
-        method: "POST",
+        method: "PUT", // ← POST 에서 PUT으로 변경
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(makeUpsertBody(row)),
     });
     return true;
 }
 
-/** 권한 수정(✅ ID만 전송) */
+/** 권한 수정 */
 export async function updateRole(originRole: string, row: Partial<RoleRow>): Promise<true> {
     const body = makeUpsertBody({
         role: row.role ?? originRole,  // 이름 변경 지원

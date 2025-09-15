@@ -1,3 +1,4 @@
+// src/features/admin/pages/UsersPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import {
     fetchUsers,
@@ -14,9 +15,9 @@ export default function UsersPage() {
     // ====== 검색 컨트롤 ======
     const [fUserId, setFUserId] = useState("");
     const [fUserName, setFUserName] = useState("");
-    const [fRole, setFRole] = useState("");
-    const [fDept, setFDept] = useState("");
-    const [fCompany, setFCompany] = useState("");
+    const [fRoles, setFRoles] = useState("");      // ROLES
+    const [fDept, setFDept] = useState("");        // DEPT_CODE
+    const [fCompany, setFCompany] = useState("");  // COMPANY
 
     const [roleOptions, setRoleOptions] = useState<SimpleOption[]>([]);
     const [deptOptions, setDeptOptions] = useState<SimpleOption[]>([]);
@@ -31,16 +32,22 @@ export default function UsersPage() {
     const [totalElements, setTotalElements] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // ====== 편집 상태 (한 행만 편집) ======
+    // ====== 편집 상태 ======
     const [editingId, setEditingId] = useState<string | null>(null);
     const [draft, setDraft] = useState<Partial<UserRow>>({});
 
     // 초기 옵션 로드 및 첫 조회
     useEffect(() => {
         (async () => {
-            const [roles, depts] = await Promise.all([fetchRoleOptions(), fetchDeptOptions()]);
-            setRoleOptions(roles);
-            setDeptOptions(depts);
+            try {
+                const [roles, depts] = await Promise.all([fetchRoleOptions(), fetchDeptOptions()]);
+                setRoleOptions(roles);
+                setDeptOptions(depts);
+            } catch (e) {
+                console.error("옵션 로드 실패", e);
+                setRoleOptions([]);
+                setDeptOptions([]);
+            }
         })();
         load(0, pageSize);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,14 +61,18 @@ export default function UsersPage() {
                 size: s,
                 userId: fUserId.trim() || undefined,
                 userName: fUserName.trim() || undefined,
-                role: fRole || undefined,
+                roles: fRoles || undefined,
                 deptCode: fDept || undefined,
-                companyName: fCompany.trim() || undefined,
+                company: fCompany.trim() || undefined,
             });
-            setRows(res.content ?? []);
-            setTotalPages(res.totalPages ?? 0);
-            setTotalElements(res.totalElements ?? 0);
-            setPage(res.number ?? p);
+
+            // ✅ 백엔드 표준(items/total/page/size/totalPages) 사용
+            setRows(res.items ?? []);
+            setTotalElements(res.total ?? 0);
+            setPage(res.page ?? p);
+
+            const tp = res.totalPages ?? Math.ceil(((res.total ?? 0) as number) / ((res.size ?? s) || 1));
+            setTotalPages(tp);
         } catch (e) {
             console.error(e);
             setRows([]);
@@ -73,19 +84,45 @@ export default function UsersPage() {
     }
 
     // 조회/초기화
-    const onSearch = () => { setPage(0); load(0, pageSize); };
+    const onSearch = () => {
+        setPage(0);
+        load(0, pageSize);
+    };
     const onReset = () => {
-        setFUserId(""); setFUserName(""); setFRole(""); setFDept(""); setFCompany("");
-        setPage(0); setPageSize(10);
-        setRows([]); setTotalPages(0); setTotalElements(0);
-        setEditingId(null); setDraft({});
+        setFUserId("");
+        setFUserName("");
+        setFRoles("");
+        setFDept("");
+        setFCompany("");
+        setPage(0);
+        setPageSize(10);
+        setRows([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        setEditingId(null);
+        setDraft({});
     };
 
     // 페이지 이동
-    const goFirst = () => { setPage(0); load(0, pageSize); };
-    const goPrev  = () => { const p = Math.max(0, page - 1); setPage(p); load(p, pageSize); };
-    const goNext  = () => { const p = Math.min(Math.max(0, totalPages - 1), page + 1); setPage(p); load(p, pageSize); };
-    const goLast  = () => { const p = Math.max(0, totalPages - 1); setPage(p); load(p, pageSize); };
+    const goFirst = () => {
+        setPage(0);
+        load(0, pageSize);
+    };
+    const goPrev = () => {
+        const p2 = Math.max(0, page - 1);
+        setPage(p2);
+        load(p2, pageSize);
+    };
+    const goNext = () => {
+        const p2 = Math.min(Math.max(0, totalPages - 1), page + 1);
+        setPage(p2);
+        load(p2, pageSize);
+    };
+    const goLast = () => {
+        const p2 = Math.max(0, totalPages - 1);
+        setPage(p2);
+        load(p2, pageSize);
+    };
 
     const pageLabel = useMemo(() => (totalPages ? page + 1 : 0), [page, totalPages]);
 
@@ -104,16 +141,14 @@ export default function UsersPage() {
         await updateUser({
             userId: editingId,
             userName: draft.userName!,
-            deptName: draft.deptName!,
-            companyName: draft.companyName!,
-            role: draft.role!,
-            // 날짜 변경이 필요하면 포함
-            joinedAt: draft.joinedAt!,
+            deptCode: draft.deptCode!, // 코드 전송
+            company: draft.company!,
+            roles: draft.roles!,
+            createdAt: draft.createdAt!,
             updatedAt: draft.updatedAt!,
         });
         setEditingId(null);
         setDraft({});
-        // 반영 후 재조회
         await load(page, pageSize);
     };
 
@@ -150,12 +185,16 @@ export default function UsersPage() {
                 <div className="flex flex-col">
                     <label className="text-xs mb-1 text-slate-600">권한</label>
                     <select
-                        value={fRole}
-                        onChange={(e) => setFRole(e.target.value)}
+                        value={fRoles}
+                        onChange={(e) => setFRoles(e.target.value)}
                         className="border border-slate-300 rounded px-2 py-1 w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">ALL</option>
-                        {roleOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {roleOptions.map((o) => (
+                            <option key={o.value} value={o.value}>
+                                {o.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
 
@@ -167,7 +206,11 @@ export default function UsersPage() {
                         className="border border-slate-300 rounded px-2 py-1 w-56 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value="">ALL</option>
-                        {deptOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {deptOptions.map((d) => (
+                            <option key={d.value} value={d.value}>
+                                {d.label}
+                            </option>
+                        ))}
                     </select>
                 </div>
 
@@ -241,12 +284,16 @@ export default function UsersPage() {
                             return (
                                 <tr
                                     key={r.userId}
-                                    className={`odd:bg-white even:bg-slate-50 hover:bg-indigo-50 cursor-pointer ${editing ? "ring-2 ring-indigo-300" : ""}`}
+                                    className={`odd:bg-white even:bg-slate-50 hover:bg-indigo-50 cursor-pointer ${
+                                        editing ? "ring-2 ring-indigo-300" : ""
+                                    }`}
                                     onClick={() => startEdit(r)}
                                     title={editing ? "편집 중" : "클릭하여 편집"}
                                 >
-                                    {/* 사용자ID: key라서 read-only */}
-                                    <td className="px-3 py-2 border-b border-slate-200 whitespace-nowrap">{r.userId}</td>
+                                    {/* 사용자ID */}
+                                    <td className="px-3 py-2 border-b border-slate-200 whitespace-nowrap">
+                                        {r.userId}
+                                    </td>
 
                                     {/* 사용자명 */}
                                     <td className="px-3 py-2 border-b border-slate-200">
@@ -261,20 +308,25 @@ export default function UsersPage() {
                                         )}
                                     </td>
 
-                                    {/* 부서정보 (셀렉트) */}
+                                    {/* 부서정보 */}
                                     <td className="px-3 py-2 border-b border-slate-200">
                                         {editing ? (
                                             <select
-                                                value={String(draft.deptName ?? "")}
-                                                onChange={(e) => upd("deptName", e.target.value)}
+                                                value={String(draft.deptCode ?? r.deptCode)}
+                                                onChange={(e) => upd("deptCode", e.target.value)}
                                                 className="border border-slate-300 rounded px-2 py-1 w-56"
                                             >
                                                 {deptOptions.map((d) => (
-                                                    <option key={d.value} value={d.value}>{d.label}</option>
+                                                    <option key={d.value} value={d.value}>
+                                                        {d.label}
+                                                    </option>
                                                 ))}
                                             </select>
                                         ) : (
-                                            r.deptName
+                                            // ✅ 서버가 deptName을 안 주면 옵션 라벨로 대체, 그래도 없으면 코드 표시
+                                            r.deptName ||
+                                            deptOptions.find((d) => d.value === r.deptCode)?.label ||
+                                            r.deptCode
                                         )}
                                     </td>
 
@@ -282,43 +334,45 @@ export default function UsersPage() {
                                     <td className="px-3 py-2 border-b border-slate-200">
                                         {editing ? (
                                             <input
-                                                value={String(draft.companyName ?? "")}
-                                                onChange={(e) => upd("companyName", e.target.value)}
+                                                value={String(draft.company ?? "")}
+                                                onChange={(e) => upd("company", e.target.value)}
                                                 className="border border-slate-300 rounded px-2 py-1 w-48"
                                             />
                                         ) : (
-                                            r.companyName
+                                            r.company
                                         )}
                                     </td>
 
-                                    {/* 권한 (셀렉트) */}
+                                    {/* 권한 */}
                                     <td className="px-3 py-2 border-b border-slate-200">
                                         {editing ? (
                                             <select
-                                                value={String(draft.role ?? "")}
-                                                onChange={(e) => upd("role", e.target.value)}
+                                                value={String(draft.roles ?? r.roles)}
+                                                onChange={(e) => upd("roles", e.target.value)}
                                                 className="border border-slate-300 rounded px-2 py-1 w-40"
                                             >
                                                 {roleOptions.map((o) => (
-                                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                                    <option key={o.value} value={o.value}>
+                                                        {o.label}
+                                                    </option>
                                                 ))}
                                             </select>
                                         ) : (
-                                            r.role
+                                            r.roles
                                         )}
                                     </td>
 
-                                    {/* 가입일자 / 변경일자 (표시는 텍스트, 필요 시 date input로 변경) */}
+                                    {/* 가입/변경 일자 */}
                                     <td className="px-3 py-2 border-b border-slate-200 whitespace-nowrap">
                                         {editing ? (
                                             <input
                                                 type="date"
-                                                value={(draft.joinedAt ?? r.joinedAt).substring(0, 10)}
-                                                onChange={(e) => upd("joinedAt", e.target.value)}
+                                                value={(draft.createdAt ?? r.createdAt).substring(0, 10)}
+                                                onChange={(e) => upd("createdAt", e.target.value)}
                                                 className="border border-slate-300 rounded px-2 py-1"
                                             />
                                         ) : (
-                                            r.joinedAt
+                                            r.createdAt
                                         )}
                                     </td>
                                     <td className="px-3 py-2 border-b border-slate-200 whitespace-nowrap">
@@ -348,7 +402,7 @@ export default function UsersPage() {
                     </table>
                 </div>
 
-                {/* Pagination (로그 화면과 동일) */}
+                {/* Pagination */}
                 <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 text-sm">
                     <div className="flex items-center gap-2">
                         <span className="text-slate-600">Rows:</span>
@@ -364,7 +418,9 @@ export default function UsersPage() {
                             disabled={loading}
                         >
                             {PAGE_SIZES.map((n) => (
-                                <option key={n} value={n}>{n}</option>
+                                <option key={n} value={n}>
+                                    {n}
+                                </option>
                             ))}
                         </select>
                     </div>
