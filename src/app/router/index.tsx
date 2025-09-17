@@ -13,6 +13,8 @@ const HomePage   = lazy(() => import("@/features/home/pages/HomePage"));
 const UsersPage  = lazy(() => import("@features/admin/pages/UsersPage"));
 // ★ 권한 관리
 const RolesPage  = lazy(() => import("@features/admin/pages/RolesPage"));
+// ★ 메뉴 관리
+const MenusPage  = lazy(() => import("@features/admin/pages/MenusPage"));
 
 // 공통 Suspense 래퍼
 const S = (el: JSX.Element) => <Suspense fallback={<div/>}>{el}</Suspense>;
@@ -70,9 +72,10 @@ export const router = createBrowserRouter(
                 { path: "sample",      loader: requireAuthed, element: S(<HomePage />) },
 
                 // ADMIN
-                { path: "admin/users", loader: requireAuthed, element: S(<UsersPage />) },
-                // ★ 권한 관리 추가
-                { path: "admin/roles", loader: requireAuthed, element: S(<RolesPage />) },
+                { path: "admin/users",  loader: requireAuthed, element: S(<UsersPage />) },
+                { path: "admin/roles",  loader: requireAuthed, element: S(<RolesPage />) },
+                // ★ 메뉴 관리 추가
+                { path: "admin/menus",  loader: requireAuthed, element: S(<MenusPage />) },
 
                 { path: "*", element: <ErrorPage status={404} /> },
             ],
