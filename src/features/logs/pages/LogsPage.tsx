@@ -35,7 +35,7 @@ export default function LogsPage() {
             setRows(res.content ?? []);
             setTotalPages(res.totalPages ?? 0);
             setTotalElements(res.totalElements ?? 0);
-            // 서버 페이지 번호를 신뢰하고 싶으면:
+            // 서버 페이지 번호를 신뢰하려면:
             // setPage(res.number ?? p);
         } catch (e) {
             console.error(e);
@@ -54,17 +54,36 @@ export default function LogsPage() {
     }, []);
 
     // 핸들러들
-    const onSearch = () => { setPage(0); load(0, pageSize); };
-    const onReset = () => {
-        setGuid(""); setLogger("");
-        setPage(0); setPageSize(10);
-        setRows([]); setTotalPages(0); setTotalElements(0);
+    const onSearch = () => {
+        setPage(0);
+        load(0, pageSize);
     };
 
-    const goFirst = () => { setPage(0); load(0, pageSize); };
-    const goPrev  = () => { const p = Math.max(0, page - 1); setPage(p); load(p, pageSize); };
-    const goNext  = () => { const p = Math.min(Math.max(0, totalPages - 1), page + 1); setPage(p); load(p, pageSize); };
-    const goLast  = () => { const p = Math.max(0, totalPages - 1); setPage(p); load(p, pageSize); };
+    // ✅ 초기화: 그리드/페이지 상태는 건드리지 않고 검색 조건만 리셋
+    const onReset = () => {
+        setGuid("");
+        setLogger("");
+    };
+
+    const goFirst = () => {
+        setPage(0);
+        load(0, pageSize);
+    };
+    const goPrev = () => {
+        const p = Math.max(0, page - 1);
+        setPage(p);
+        load(p, pageSize);
+    };
+    const goNext = () => {
+        const p = Math.min(Math.max(0, totalPages - 1), page + 1);
+        setPage(p);
+        load(p, pageSize);
+    };
+    const goLast = () => {
+        const p = Math.max(0, totalPages - 1);
+        setPage(p);
+        load(p, pageSize);
+    };
 
     const pageLabel = useMemo(() => (totalPages ? page + 1 : 0), [page, totalPages]);
 
@@ -105,7 +124,9 @@ export default function LogsPage() {
                     >
                         <option value="">ALL</option>
                         {loggerOptions.map((l) => (
-                            <option key={l} value={l}>{l}</option>
+                            <option key={l} value={l}>
+                                {l}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -128,9 +149,7 @@ export default function LogsPage() {
 
             {/* Card + Table */}
             <div className="bg-white rounded-xl shadow-md border border-slate-200">
-                <div className="px-4 py-3 border-b border-slate-200 text-sm font-medium text-slate-700">
-                    목록
-                </div>
+                <div className="px-4 py-3 border-b border-slate-200 text-sm font-medium text-slate-700">목록</div>
                 <div className="p-3 overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="bg-slate-100 text-slate-700">
@@ -158,7 +177,9 @@ export default function LogsPage() {
                                 <td className="px-3 py-2 border-b border-slate-200">{r.className}</td>
                                 <td className="px-3 py-2 border-b border-slate-200">{r.guid}</td>
                                 <td className="px-3 py-2 border-b border-slate-200">
-                                    <div className="max-w-[36rem] truncate" title={r.message}>{r.message}</div>
+                                    <div className="max-w-[36rem] truncate" title={r.message}>
+                                        {r.message}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -174,8 +195,9 @@ export default function LogsPage() {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 text-sm">
+                {/* Pagination — 가운데 정렬 */}
+                <div className="grid grid-cols-3 items-center px-3 py-2 border-t border-slate-200 text-sm">
+                    {/* 좌: Rows */}
                     <div className="flex items-center gap-2">
                         <span className="text-slate-600">Rows:</span>
                         <select
@@ -190,12 +212,15 @@ export default function LogsPage() {
                             disabled={loading}
                         >
                             {PAGE_SIZES.map((n) => (
-                                <option key={n} value={n}>{n}</option>
+                                <option key={n} value={n}>
+                                    {n}
+                                </option>
                             ))}
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* 중: 페이징 버튼 */}
+                    <div className="flex items-center justify-center gap-2">
                         <button
                             className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
                             onClick={goFirst}
@@ -232,6 +257,9 @@ export default function LogsPage() {
                             》
                         </button>
                     </div>
+
+                    {/* 우: 자리 맞춤 */}
+                    <div />
                 </div>
             </div>
         </div>

@@ -88,13 +88,16 @@ export async function updateUser(
     row: Partial<UserRow> & { userId: string }
 ): Promise<true> {
     const payload = {
-        userName: row.userName,
+        // ⬇️ userName → name 으로 보냄
+        name: row.userName,
         deptCode: row.deptCode,
         company: row.company,
         roles: row.roles,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
+        // 백엔드가 LocalDate 받는다면 날짜만 보내는게 안전합니다 (선택)
+        createdAt: row.createdAt?.substring(0, 10),
+        updatedAt: row.updatedAt?.substring(0, 10),
     };
+
     await apiFetch(`/api/users/${encodeURIComponent(row.userId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

@@ -1,3 +1,4 @@
+// src/features/admin/pages/Roles.tsx
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -33,7 +34,7 @@ export default function RolesPage() {
     // ====== 편집 상태 ======
     const [editingKey, setEditingKey] = useState<string | null>(null);
     const [draft, setDraft] = useState<Partial<RoleRow>>({});
-    const [openPickerFor, setOpenPickerFor] = useState<string | null>(null); // 메뉴 피커 오픈 행
+    const [openPickerFor, setOpenPickerFor] = useState<string | null>(null);
 
     const pageLabel = useMemo(() => (totalPages ? page + 1 : 0), [page, totalPages]);
 
@@ -51,7 +52,7 @@ export default function RolesPage() {
 
     const displayMenu = (r: RoleRow) => {
         const ids = (r.menuIds?.length ? r.menuIds : parseIdsFrom(r.menuNames)) ?? [];
-        return ids.length ? ids.map(labelOf).join(", ") : (r.menuNames ?? "");
+        return ids.length ? ids.map(labelOf).join(", ") : r.menuNames ?? "";
     };
 
     useEffect(() => {
@@ -99,7 +100,7 @@ export default function RolesPage() {
         }
     }
 
-    // 편집 시작
+    // 편집 시작/종료
     const startEdit = (r: RoleRow) => {
         let mIds = r.menuIds ?? [];
         if (!mIds.length && r.menuNames) {
@@ -110,15 +111,11 @@ export default function RolesPage() {
         setOpenPickerFor(null);
         setDraft({ ...r, menuIds: mIds });
     };
-
-    // 편집 취소
     const cancelEdit = () => {
         setEditingKey(null);
         setOpenPickerFor(null);
         setDraft({});
     };
-
-    // 행 클릭: 편집 ↔ 조회 토글
     const onRowClick = (r: RoleRow, editing: boolean) => {
         if (editing) cancelEdit();
         else startEdit(r);
@@ -138,7 +135,7 @@ export default function RolesPage() {
     const setField = <K extends keyof RoleRow>(k: K, v: RoleRow[K]) =>
         setDraft((d) => ({ ...d, [k]: v }));
 
-    // 저장(생성/수정) — ID만 전송
+    // 저장(생성/수정)
     const onSave = async () => {
         if (!draft) return;
         const role = (draft.role ?? "").trim();
@@ -190,24 +187,18 @@ export default function RolesPage() {
         setPage(0);
         load(0, pageSize);
     };
+
+    // ✅ 초기화: 검색조건만 리셋 (그리드/페이지/편집상태/데이터 유지)
     const onReset = () => {
         setFRole("");
         setFMenuId("");
-        setPage(0);
-        setPageSize(10);
-        setRows([]);
-        setTotalPages(0);
-        setTotalElements(0);
-        cancelEdit();
+        // NO: setRows / setTotalPages / setTotalElements / cancelEdit / load
     };
 
     // ★ 그리드 내 "빈 영역" 클릭 시 편집 종료
     const onBlankAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!editingKey) return;
-        // 컨테이너 자체를 클릭한 경우(테이블/행이 아닌 진짜 빈 공간)
-        if (e.currentTarget === e.target) {
-            cancelEdit();
-        }
+        if (e.currentTarget === e.target) cancelEdit();
     };
 
     return (
@@ -265,7 +256,7 @@ export default function RolesPage() {
 
             {/* Card + Table */}
             <div ref={gridRef} className="bg-white rounded-xl shadow-md border border-slate-200">
-                {/* Table header row with actions */}
+                {/* header actions */}
                 <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div className="text-sm font-medium text-slate-700">목록</div>
                     <div className="flex gap-2">
@@ -295,13 +286,9 @@ export default function RolesPage() {
                     </div>
                 </div>
 
-                {/* min-height = 약 10행, 가로/세로 모두 자동 스크롤 */}
-                <div
-                    className="p-3 overflow-auto min-h-[calc(10*2.5rem+3rem)]"
-                    onClick={onBlankAreaClick} // ★ 빈 영역 클릭 시 편집 종료
-                >
+                {/* grid */}
+                <div className="p-3 overflow-auto min-h-[calc(10*2.5rem+3rem)]" onClick={onBlankAreaClick}>
                     <table className="w-full text-sm table-auto">
-                        {/* 반응형 폭 분배: 1열/3열/4열 고정, 2열은 남은 공간 전체 */}
                         <colgroup>
                             <col className="w-48" />
                             <col />
@@ -330,7 +317,7 @@ export default function RolesPage() {
                                     className={`odd:bg-white even:bg-slate-50 hover:bg-indigo-50 cursor-pointer ${
                                         editing ? "bg-indigo-50/60" : ""
                                     }`}
-                                    onClick={() => onRowClick(r, editing)} // 행 어디를 클릭해도 동작
+                                    onClick={() => onRowClick(r, editing)}
                                     title={editing ? "편집 중" : "클릭하여 편집"}
                                 >
                                     {/* 권한명 */}
@@ -347,7 +334,7 @@ export default function RolesPage() {
                                         )}
                                     </td>
 
-                                    {/* 메뉴 권한 – 오버레이 피커(열림/닫힘 제어) */}
+                                    {/* 메뉴 권한 */}
                                     <td
                                         className="px-3 border-b border-slate-200 h-10 align-middle relative overflow-visible"
                                         onClick={(e) => {
@@ -359,19 +346,14 @@ export default function RolesPage() {
                                     >
                                         {editing ? (
                                             <div className="relative h-8">
-                                                {/* 표시 텍스트(피커 트리거) + 화살표 UI */}
                                                 {!pickerOpen && (
                                                     <div className="relative select-none bg-white border border-slate-300 rounded px-2 pr-8 h-8 leading-8 text-sm w-full min-w-0 cursor-pointer">
                                                         {((draft.menuIds ?? []) as string[]).length
                                                             ? (draft.menuIds as string[]).map(labelOf).join(", ")
                                                             : "메뉴 선택…"}
-                                                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-                                ▾
-                              </span>
+                                                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">▾</span>
                                                     </div>
                                                 )}
-
-                                                {/* 실제 피커(열렸을 때만 렌더) */}
                                                 {pickerOpen && (
                                                     <select
                                                         multiple
@@ -381,7 +363,7 @@ export default function RolesPage() {
                                                         onChange={(e) => {
                                                             const vals = Array.from(e.target.selectedOptions).map((o) => o.value);
                                                             setField("menuIds", vals as any);
-                                                            setOpenPickerFor(null); // 선택 즉시 닫기
+                                                            setOpenPickerFor(null);
                                                         }}
                                                         onBlur={() => setOpenPickerFor(null)}
                                                         onKeyDown={(e) => {
@@ -403,7 +385,6 @@ export default function RolesPage() {
                                         )}
                                     </td>
 
-                                    {/* 생성/변경일자 */}
                                     <td className="px-3 border-b border-slate-200 whitespace-nowrap h-10 align-middle">
                                         {r.createdAt}
                                     </td>
@@ -425,8 +406,9 @@ export default function RolesPage() {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 text-sm">
+                {/* Pagination (가운데 정렬) */}
+                <div className="grid grid-cols-3 items-center px-3 py-2 border-t border-slate-200 text-sm">
+                    {/* 좌: Rows */}
                     <div className="flex items-center gap-2">
                         <span className="text-slate-600">Rows:</span>
                         <select
@@ -448,58 +430,25 @@ export default function RolesPage() {
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
-                            onClick={() => {
-                                setPage(0);
-                                load(0, pageSize);
-                            }}
-                            disabled={loading || page <= 0}
-                            aria-label="first"
-                        >
-                            《
-                        </button>
-                        <button
-                            className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
-                            onClick={() => {
-                                const p = Math.max(0, page - 1);
-                                setPage(p);
-                                load(p, pageSize);
-                            }}
-                            disabled={loading || page <= 0}
-                            aria-label="prev"
-                        >
-                            〈
-                        </button>
-                        <span className="text-slate-700">
-              {pageLabel} / {Math.max(totalPages, 0)}
-            </span>
-                        <button
-                            className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
-                            onClick={() => {
-                                const p = Math.min(Math.max(0, totalPages - 1), page + 1);
-                                setPage(p);
-                                load(p, pageSize);
-                            }}
-                            disabled={loading || page >= totalPages - 1}
-                            aria-label="next"
-                        >
-                            〉
-                        </button>
-                        <button
-                            className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
-                            onClick={() => {
-                                const p = Math.max(0, totalPages - 1);
-                                setPage(p);
-                                load(p, pageSize);
-                            }}
-                            disabled={loading || page >= totalPages - 1}
-                            aria-label="last"
-                        >
-                            》
-                        </button>
+                    {/* 중: 페이징 컨트롤 */}
+                    <div className="flex items-center justify-center gap-2">
+                        <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
+                                onClick={() => { setPage(0); load(0, pageSize); }}
+                                disabled={loading || page <= 0} aria-label="first">《</button>
+                        <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
+                                onClick={() => { const p = Math.max(0, page - 1); setPage(p); load(p, pageSize); }}
+                                disabled={loading || page <= 0} aria-label="prev">〈</button>
+                        <span className="text-slate-700">{pageLabel} / {Math.max(totalPages, 0)}</span>
+                        <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
+                                onClick={() => { const p = Math.min(Math.max(0, totalPages - 1), page + 1); setPage(p); load(p, pageSize); }}
+                                disabled={loading || page >= totalPages - 1} aria-label="next">〉</button>
+                        <button className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
+                                onClick={() => { const p = Math.max(0, totalPages - 1); setPage(p); load(p, pageSize); }}
+                                disabled={loading || page >= totalPages - 1} aria-label="last">》</button>
                     </div>
+
+                    {/* 우: 자리 맞춤 */}
+                    <div />
                 </div>
             </div>
         </div>

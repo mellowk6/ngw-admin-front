@@ -1,3 +1,4 @@
+// src/features/admin/pages/Menus.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     fetchMenuOptions,
@@ -14,13 +15,18 @@ import {
 const PAGE_SIZES = [10, 30, 50, 100];
 
 export default function MenusPage() {
-    // ===== 검색 컨트롤 =====
+    // ===== 검색 컨트롤(폼 상태: 화면에 보이는 값) =====
     const [keyword, setKeyword] = useState("");
     const [fParentId, setFParentId] = useState<string>("");
     const [fLeaf, setFLeaf] = useState<"" | boolean>("");
 
-    // ===== 페이지 상태 (RolesPage 스타일) =====
-    const [page, setPage] = useState(1);     // 1-base
+    // ===== 적용된 검색 조건(실제 조회에 사용) =====
+    const [aKeyword, setAKeyword] = useState("");
+    const [aParentId, setAParentId] = useState<string>("");
+    const [aLeaf, setALeaf] = useState<"" | boolean>("");
+
+    // ===== 페이지 상태 (1-base) =====
+    const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
     // ===== 결과 & 상태 =====
@@ -55,15 +61,16 @@ export default function MenusPage() {
 
     const pageLabel = useMemo(() => (totalPages ? page : 0), [page, totalPages]);
 
+    // 조회에 사용할 파라미터는 '적용 상태'로만 구성
     const searchParams: MenuSearch = useMemo(
         () => ({
             page,
             size: pageSize,
-            keyword: keyword.trim() || undefined,
-            parentId: fParentId || undefined,
-            leaf: fLeaf,
+            keyword: aKeyword.trim() || undefined,
+            parentId: aParentId || undefined,
+            leaf: aLeaf,
         }),
-        [page, pageSize, keyword, fParentId, fLeaf]
+        [page, pageSize, aKeyword, aParentId, aLeaf]
     );
 
     // 옵션 로드
@@ -74,7 +81,7 @@ export default function MenusPage() {
         })();
     }, []);
 
-    // 목록 로드
+    // 목록 로드 (적용 상태/페이지 변경 시만)
     useEffect(() => {
         (async () => {
             setLoading(true);
@@ -104,18 +111,21 @@ export default function MenusPage() {
     };
 
     // ===== 액션 =====
+    // 조회: 현재 폼 값을 '적용 상태'로 반영 → 그때만 그리드가 새로고침
     const onSearch = () => {
+        setAKeyword(keyword);
+        setAParentId(fParentId);
+        setALeaf(fLeaf);
         setPage(1);
         setSelectedId(null);
     };
 
+    // 초기화: 폼만 리셋(그리드는 그대로)
     const onReset = () => {
         setKeyword("");
         setFParentId("");
         setFLeaf("");
-        setPage(1);
-        setPageSize(10);
-        setSelectedId(null);
+        // page/pageSize/적용된 조건/그리드/선택 모두 유지
     };
 
     const onAdd = () => {
@@ -173,7 +183,7 @@ export default function MenusPage() {
                 <div className="text-xs text-slate-500">총 {totalElements.toLocaleString()}건</div>
             </div>
 
-            {/* Filters (RolesPage 톤) */}
+            {/* Filters */}
             <div className="flex flex-wrap items-end gap-2">
                 <div className="flex flex-col">
                     <label className="text-xs mb-1 text-slate-600">키워드</label>
@@ -233,7 +243,7 @@ export default function MenusPage() {
                 </button>
             </div>
 
-            {/* Card + Table (RolesPage 톤) */}
+            {/* Card + Table */}
             <div ref={gridRef} className="bg-white rounded-xl shadow-md border border-slate-200">
                 {/* Card header with actions */}
                 <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -305,9 +315,7 @@ export default function MenusPage() {
                                         {r.parentId ?? "ROOT"}
                                     </td>
                                     <td className="px-3 border-b border-slate-200 h-10 align-middle">{r.menuName}</td>
-                                    <td className="px-3 border-b border-slate-200 h-10 align-middle">
-                                        {r.leaf ? "Y" : "N"}
-                                    </td>
+                                    <td className="px-3 border-b border-slate-200 h-10 align-middle">{r.leaf ? "Y" : "N"}</td>
                                     <td className="px-3 border-b border-slate-200 whitespace-nowrap h-10 align-middle">
                                         {r.createdAt?.replace("T", " ").slice(0, 19) ?? ""}
                                     </td>
@@ -329,8 +337,9 @@ export default function MenusPage() {
                     </table>
                 </div>
 
-                {/* Pagination (RolesPage 톤) */}
-                <div className="flex items-center justify-between px-3 py-2 border-t border-slate-200 text-sm">
+                {/* Pagination (가운데 정렬) */}
+                <div className="grid grid-cols-3 items-center px-3 py-2 border-t border-slate-200 text-sm">
+                    {/* 좌: Rows */}
                     <div className="flex items-center gap-2">
                         <span className="text-slate-600">Rows:</span>
                         <select
@@ -351,7 +360,8 @@ export default function MenusPage() {
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* 중: 페이징 컨트롤 */}
+                    <div className="flex items-center justify-center gap-2">
                         <button
                             className="px-2 py-1 rounded border border-slate-300 hover:bg-slate-100 disabled:opacity-40"
                             onClick={() => setPage(1)}
@@ -388,6 +398,9 @@ export default function MenusPage() {
                             》
                         </button>
                     </div>
+
+                    {/* 우: placeholder (중앙 정렬 유지용) */}
+                    <div />
                 </div>
             </div>
 
@@ -445,10 +458,20 @@ export default function MenusPage() {
                             </div>
 
                             <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" className="border border-slate-300 px-3 py-1 rounded" onClick={() => { setOpenModal(false); setDraft(null); }}>
+                                <button
+                                    type="button"
+                                    className="border border-slate-300 px-3 py-1 rounded"
+                                    onClick={() => {
+                                        setOpenModal(false);
+                                        setDraft(null);
+                                    }}
+                                >
                                     닫기
                                 </button>
-                                <button type="submit" className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                                <button
+                                    type="submit"
+                                    className="px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                                >
                                     저장
                                 </button>
                             </div>
